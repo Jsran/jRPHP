@@ -108,7 +108,7 @@ class jR
 	public function Run()
 	{ # 运行
 		# 运行模式
-		$this->setDefine(['CLI' => PHP_SAPI === 'cli','WEB' => strpos(PHP_SAPI,'apache') !== false]);
+		$this->setDefine(['CLI' => PHP_SAPI === 'cli','WEB' => strpos(PHP_SAPI,'apache') !== false || strpos(PHP_SAPI,'cgi') !== false]);
 		# 配置文件
 		$GLOBALS += require PATH. DS . CORE. DS. 'config.php';
 		# 公共方法
