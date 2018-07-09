@@ -9,8 +9,6 @@ class demo extends Base
 	public function index()
 	{
 		dump(parent::$args);
-		#echo $_GET['run'];
-		$this->run =self::$args['run'];
 		dump("我是home模块的 demo 控制器中的 index动作!");
 		# 父层调用
 		parent::jump();
