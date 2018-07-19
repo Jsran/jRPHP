@@ -36,13 +36,60 @@ class M{
 	{
 		return $this->dbInstance($GLOBALS['mysql'], 'master')->lastInsertId();
 	}
-	public function create($row){
+	public function findAll($conditions = array(), $sort = null, $fields = '*', $limit = null)
+	{ # 查找全部
+		$sort = !empty($sort) ? ' order by '.$sort : '';
+		$conditions = $this->_where($conditions);
+
+		$sql = ' from '.$this->table_name.$conditions["_where"];
+		if(is_array($limit)){
+			$total = $this->query('select count(*) as c '.$sql, $conditions["_bindParams"]);
+			if(!isset($total[0]['c']) || $total[0]['c'] == 0)return array();
+			
+			$limit = $limit + array(1, 10, 10);
+			$limit = $this->pager($limit[0], $limit[1], $limit[2], $total[0]['c']);
+			$limit = empty($limit) ? '' : ' LIMIT '.$limit['offset'].','.$limit['limit'];			
+		}else{
+			$limit = !empty($limit) ? ' LIMIT '.$limit : '';
+		}
+		return $this->query('select '. $fields . $sql . $sort . $limit, $conditions["_bindParams"]);
+	}
+	
+	public function find($conditions = array(), $sort = null, $fields = '*')
+	{ # 查找一条
+		$res = $this->findAll($conditions, $sort, $fields, 1);
+		return !empty($res) ? array_pop($res) : false;
+	}
+	
+	public function update($conditions, $row)
+	{ # 更新数据
+		$values = array();
+		foreach ($row as $k=>$v){
+			$values[":M_UPDATE_".$k] = $v;
+			$setstr[] = "`{$k}` = ".":M_UPDATE_".$k;
+		}
+		$conditions = $this->_where( $conditions );
+		return $this->execute("update ".$this->table_name." set ".implode(', ', $setstr).$conditions["_where"], $conditions["_bindParams"] + $values);
+	}
+	public function delete($conditions)
+	{ # 删除数据
+		$conditions = $this->_where( $conditions );
+		return $this->execute("delete from ".$this->table_name.$conditions["_where"], $conditions["_bindParams"]);
+	}
+	public function create($row)
+	{ # 创建数据
 		$values = array();
 		foreach($row as $k=>$v){
 			$keys[] = "`{$k}`"; $values[":".$k] = $v; $marks[] = ":".$k;
 		}
-		$this->execute("INSERT INTO ".$this->table_name." (".implode(', ', $keys).") VALUES (".implode(', ', $marks).")", $values);
+		$this->execute("insert into ".$this->table_name." (".implode(', ', $keys).") values (".implode(', ', $marks).")", $values);
 		return $this->dbInstance($GLOBALS['mysql'], 'master')->lastInsertId();
+	}
+	public function findCount($conditions)
+	{ # 获取总条数
+		$conditions = $this->_where( $conditions );
+		$count = $this->query("select count(*) c from ".$this->table_name.$conditions["_where"], $conditions["_bindParams"]);
+		return isset($count[0]['c']) && $count[0]['c'] ? $count[0]['c'] : 0;
 	}
 	public function dumpSql(){return $this->sql;}
 	public function pager($page, $pageSize = 10, $scope = 10, $total){
@@ -84,29 +131,60 @@ class M{
 		return $this->page;
 	}
 	public function query($sql, $params = array()){return $this->execute($sql, $params, true);}
+
 	public function execute($sql, $params = array(), $readonly = false){
 		$this->sql[] = $sql;
-		if($readonly && !empty($GLOBALS['mysql']['MYSQL_SLAVE'])){
-			# 从库查询
-			$slave_key = array_rand($GLOBALS['mysql']['MYSQL_SLAVE']);
-			$sth = $this->dbInstance($GLOBALS['mysql']['MYSQL_SLAVE'][$slave_key], 'slave_'.$slave_key)->prepare($sql);
+		if($readonly && !empty($GLOBALS['mysql']['SLAVE'])){
+			$slave_key = array_rand($GLOBALS['mysql']['SLAVE']);
+			$sth = $this->dbInstance($GLOBALS['mysql']['SLAVE'][$slave_key], 'slave_'.$slave_key)->prepare($sql);
 		}else{
 			$sth = $this->dbInstance($GLOBALS['mysql'], 'master')->prepare($sql);
 		}
 		if(is_array($params) && !empty($params)){
-			foreach($params as $k=>&$v) $sth->bindParam($k, $v);
+			foreach($params as $k => &$v){
+				if(is_int($v)){
+					$data_type = PDO::PARAM_INT;
+				}elseif(is_bool($v)){
+					$data_type = PDO::PARAM_BOOL;
+				}elseif(is_null($v)){
+					$data_type = PDO::PARAM_NULL;
+				}else{
+					$data_type = PDO::PARAM_STR;
+				}
+				$sth->bindParam($k, $v, $data_type);
+			}
 		}
 		if($sth->execute())return $readonly ? $sth->fetchAll(PDO::FETCH_ASSOC) : $sth->rowCount();
 		$err = $sth->errorInfo();
-		err('Database SQL: "' . $sql. '", ErrorInfo: '. $err[2]);
+		err('Database SQL: "' . $sql. '", ErrorInfo: '. $err[2], 1);
 	}
+
 	public function dbInstance($db_config, $db_config_key, $force_replace = false)
 	{ # 切换主数据库
-		if($force_replace || empty($GLOBALS['mysql_instances'][$db_config_key])){
+		if($force_replace || empty($GLOBALS['instances'][$db_config_key])){
 			try {
-				$GLOBALS['mysql_instances'][$db_config_key] = new PDO('mysql:dbname='.$db_config['MYSQL_DB'].';host='.$db_config['MYSQL_HOST'].';port='.$db_config['MYSQL_PORT'], $db_config['MYSQL_USER'], $db_config['MYSQL_PASS'], array(PDO::MYSQL_ATTR_INIT_COMMAND=>'SET NAMES \''.$db_config['MYSQL_CHARSET'].'\''));
+				$GLOBALS['instances'][$db_config_key] = new PDO('mysql:dbname='.$db_config['DB'].';host='.$db_config['HOST'].';port='.$db_config['PORT'], $db_config['USER'], $db_config['PASS'], array(PDO::MYSQL_ATTR_INIT_COMMAND=>'SET NAMES \''.$db_config['CHARSET'].'\''));
 			}catch(PDOException $e){err('Database Err: '.$e->getMessage());}
 		}
-		return $GLOBALS['mysql_instances'][$db_config_key];
+		return $GLOBALS['instances'][$db_config_key];
+	}
+	private function _where($conditions){
+		$result = array( "_where" => " ","_bindParams" => array());
+		if(is_array($conditions) && !empty($conditions)){
+			$fieldss = array(); $sql = null; $join = array();
+			if(isset($conditions[0]) && $sql = $conditions[0]) unset($conditions[0]);
+			foreach( $conditions as $key => $condition ){
+				if(substr($key, 0, 1) != ":"){
+					unset($conditions[$key]);
+					$conditions[":".$key] = $condition;
+				}
+				$join[] = "`{$key}` = :{$key}";
+			}
+			if(!$sql) $sql = join(" and ",$join);
+
+			$result["_where"] = " where ". $sql;
+			$result["_bindParams"] = $conditions;
+		}
+		return $result;
 	}
 }

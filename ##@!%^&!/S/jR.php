@@ -94,7 +94,7 @@ class jR
 	}
 	public function setHook()
 	{ # 设置
-
+		dump('哎呀哟');
 	}
 	public function autoload($class)
 	{ # 自动加载

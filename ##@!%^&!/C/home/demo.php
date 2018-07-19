@@ -16,11 +16,40 @@ class demo extends Base
 		self::demos();
 		# 实例化一个M根类
 		$ob = new M;
-		dump($ob->OneSql("select * from s_config"));
+		dump($ob->OneSql("select name from s_config "));
+
 		dump($ob);
 		# 实例化一个M模型exit
-		$ob = new M\User;
-		dump($ob);
+		$ob = new I\M;
+		$ob->action(function($M){
+			dump($M->oneSql("select * from s_user where id = :id",[':id' => 10000]));
+		});
+		dump(
+			$ob->
+			table('s_user a')->
+			select('a.id,a.name,a.user')->
+			join('s_money b','inner',['a.id = b.uid and a.type > :t',':t' => 2])->
+			join('s_money_log c','inner',['c.uid = b.uid'])->
+			where(['a.id'=> 10000])->
+			limit('0,10')->
+			run(true)
+		);
+
+		dump(
+			$ob->
+			table('s_user')->
+			update(['pass' => md5('123456'),'link = link + 1'])->
+			where(['id > :id','user = :user or real_name = :xx',':id'=>10001,':user'=>'hehe'])->
+			run(true)
+		);
+
+		dump(
+			$ob->
+			insert(['user' => 'jsran', 'pass' => md5('123456')])->
+			duplicate(['link = link + 1','pass = values(pass)'])->
+			run(true)
+		);
+
 		# 生产一个URL地址
 		dump(url(['m' => 'home', 's' =>'demo' , 'i' => 'index' , 'index'=> '']));
 		# 插件静态化测试
