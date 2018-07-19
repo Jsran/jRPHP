@@ -11,6 +11,7 @@ defined('DS') or define('DS', DIRECTORY_SEPARATOR);
 defined('PACK') or define('PACK', 'jR');
 defined('CORE') or define('CORE', '##@!%^&!');
 defined('PATH') or define('PATH', dirname(__DIR__));
+defined('DATA') or define('DATA', PATH.DS.'O');
 include PATH.DS.CORE.DS.'S'.DS.'jR.php';
 $ob = new jR();
 $ob->setDefine(['JWEB' => 0, 'JWAP' => 1, 'JIOS' => 2, 'JAND' => 3, 'JPC' => 0, 'JH5' => 1]);

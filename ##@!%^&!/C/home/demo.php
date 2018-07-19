@@ -6,8 +6,18 @@ class demo extends Base
 {
 	public $layout = null;
 
+
 	public function index()
 	{
+		#文件夹操作
+		I\Folder::create(DATA.DS.'path');
+		#缓存操作
+		I\Cache::getInstance()->set('name','我是缓存内容');
+		#$Ca = I\Cache::getInstance()->rm('name');
+		$Ca = I\Cache::getInstance()->get('name');
+		dump($Ca);
+
+		
 		dump(parent::$args);
 		dump("我是home模块的 demo 控制器中的 index动作!");
 		# 父层调用
