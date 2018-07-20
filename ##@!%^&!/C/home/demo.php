@@ -21,9 +21,10 @@ class demo extends Base
 		dump($ob);
 		# 实例化一个M模型exit
 		$ob = new I\M;
-		$ob->action(function($M){
+		dump($ob->action(function($M){
 			dump($M->oneSql("select * from s_user where id = :id",[':id' => 10000]));
-		});
+			return ['asdsadsa'];
+		}));
 		dump(
 			$ob->
 			table('s_user a')->
@@ -48,6 +49,20 @@ class demo extends Base
 			insert(['user' => 'jsran', 'pass' => md5('123456')])->
 			duplicate(['link = link + 1','pass = values(pass)'])->
 			run(true)
+		);
+		# 查询单条数据
+		dump(
+			$ob->
+			select('id,user,pass',true)->
+			where(['id' => 10000])->
+			run()
+		);
+		# 查询多条数据
+		dump(
+			$ob->
+			select('id,user,pass')->
+			where(['id' => 10000])->
+			run()
 		);
 
 		# 生产一个URL地址

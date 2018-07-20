@@ -12,12 +12,12 @@ class M
 		if($table)$this->table = $table;
 		$this->conn = self::dbInstance();
 	}
-	public function action($func)
+	public function action(callable $func)
 	{ # 事务执行
 		if (!is_callable($func)) return false;
 		$this->begin();
 		try {
-			$result = $func($this) ? $this->commit() : $this->rollBack();
+			($result = $func($this)) ? $this->commit() : $this->rollBack();
 		}catch (Exception $e) {
 			$this->link['master']->rollBack();
 			throw new Exception($e->getMessage());
@@ -62,7 +62,6 @@ class M
 	public function update(array $data) : self
 	{ # 更新数据
 		self::__init(__function__);
-		
 		$this->sql = "update {$this->table}" . self::wo($data,'set',', ');
 		return $this;
 	}
@@ -81,9 +80,10 @@ class M
 		$this->sql = "{$this->run['first']} from {$this->table}";
 		return $this;
 	}
-	public function select($field = '*') : self
+	public function select($field = '*',$one = false) : self
 	{ # 查询数据
 		self::__init(__function__);
+		$this->run['sone'] = $one;
 		$this->sql = "{$this->run['first']} {$field} from {$this->table}";
 		return $this;
 	}
@@ -126,9 +126,10 @@ class M
 	public function run(bool $show = false)
 	{ # 执行操作
 		array_walk($this->exec, function($v,$k){$this->sql .= $this->run[$v] ?? null;});
-		dump($this->run['bind']);
 		if($show) return $this->sql;
-		self::execute($sql,$this->run['bind']);
+		$sth = self::execute($this->sql,$this->run['bind']);
+		$run = ['insert' => 'lastInsertId','select' => $this->run['sone'] ? 'fetch' : 'fetchAll'][$this->run['first']] ?? 'rowCount';
+		return strpos($run,'tch') ? $sth->$run(PDO::FETCH_ASSOC) : $sth->$run();
 	}
 	private function __init($first = null)
 	{ # 净化变量
@@ -138,24 +139,21 @@ class M
 	}
 	private function wo($where,$wo = 'where',$ao = ' and '): string
 	{ # 设计条件
-		if(is_array($where) && !empty($where))
-		{
-			$mark = ['join' => [],'where' => []];
-			array_walk($where, function($v,$k) use(&$mark,$wo){
-				if(gettype($k) == 'integer' ):
-					$mark['join'][] = $v;
-				elseif(!preg_match('/^:.*+/',$k)):
-					$kk =  str_replace('.','' ,$k);
-					$mark['join'][] = "`{$k}` = :{$wo}_{$kk}";
-					$mark['where'][":{$wo}_{$kk}"] = $v;
-				else:
-					$mark['where'][$k] = $v;
-				endif;
-			});
-			$this->run['bind'] += $mark['where'];
-			return " {$wo} ".join($ao,$mark['join']);
-		}
-		return null;
+		if(!is_array($where) || empty($where)) return null;
+		$mark = ['join' => [],'where' => []];
+		array_walk($where, function($v,$k) use(&$mark,$wo){
+			if(gettype($k) == 'integer' ):
+				$mark['join'][] = $v;
+			elseif(!preg_match('/^:.*+/',$k)):
+				$kk =  str_replace('.','' ,$k);
+				$mark['join'][] = "`{$k}` = :{$wo}_{$kk}";
+				$mark['where'][":{$wo}_{$kk}"] = $v;
+			else:
+				$mark['where'][$k] = $v;
+			endif;
+		});
+		$this->run['bind'] += $mark['where'];
+		return " {$wo} ".join($ao,$mark['join']);
 	}
 	private function pdoTe(&$v)
 	{ # 获取类型
