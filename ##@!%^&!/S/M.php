@@ -1,190 +1,227 @@
 <?php
 namespace jR;
 use PDO;
-class M{
-	public $page;
-	public $table_name;
-	
-	private $sql = array();
-	
-	public function __construct($table_name = null){if($table_name)$this->table_name = $table_name;}
-	public function oneSql( $sql, $params = array())
-	{ # 获取一条数据
-		$res = $this->query($sql." LIMIT 1", $params);
-		return array_pop($res);
-	}
-	public function allSql( $sql, $params = array(), & $pager = null)
-	{ # 获取全部数据
-		if(is_array($pager))
-		{ # 是否数组
-			$total = $this->query('select count(*) as counter from ('.$sql.') as jsran',$params);
-			list($page,$size,$scope) = array_pad($pager,3,10);
-			$pager = $this->pager($page,$size,$scope,$total[0]['counter']);
-			$limit = empty($pager) ? '' : ' LIMIT '.$pager['offset'].','.$pager['limit'];
-		}
-		else
-		{
-			$limit = !empty($pager) ? ' LIMIT '.$pager : '';
-		}
-		return $this->query($sql."{$limit}", $params);
-	}
-	public function runSql( $sql, $params = array())
-	{ # 执行语句
-		return $this->execute($sql,$params,false);
-	}
-	public function InsertID()
-	{
-		return $this->dbInstance($GLOBALS['mysql'], 'master')->lastInsertId();
-	}
-	public function findAll($conditions = array(), $sort = null, $fields = '*', $limit = null)
-	{ # 查找全部
-		$sort = !empty($sort) ? ' order by '.$sort : '';
-		$conditions = $this->_where($conditions);
+use Exception;
+class M
+{
+	# js@jsran.cn
+	# by 2018-07-20 司丙然
+	# PHP 7.0+
 
-		$sql = ' from '.$this->table_name.$conditions["_where"];
-		if(is_array($limit)){
-			$total = $this->query('select count(*) as c '.$sql, $conditions["_bindParams"]);
-			if(!isset($total[0]['c']) || $total[0]['c'] == 0)return array();
-			
-			$limit = $limit + array(1, 10, 10);
-			$limit = $this->pager($limit[0], $limit[1], $limit[2], $total[0]['c']);
-			$limit = empty($limit) ? '' : ' LIMIT '.$limit['offset'].','.$limit['limit'];			
-		}else{
-			$limit = !empty($limit) ? ' LIMIT '.$limit : '';
-		}
-		return $this->query('select '. $fields . $sql . $sort . $limit, $conditions["_bindParams"]);
-	}
-	
-	public function find($conditions = array(), $sort = null, $fields = '*')
-	{ # 查找一条
-		$res = $this->findAll($conditions, $sort, $fields, 1);
-		return !empty($res) ? array_pop($res) : false;
-	}
-	
-	public function update($conditions, $row)
-	{ # 更新数据
-		$values = array();
-		foreach ($row as $k=>$v){
-			$values[":M_UPDATE_".$k] = $v;
-			$setstr[] = "`{$k}` = ".":M_UPDATE_".$k;
-		}
-		$conditions = $this->_where( $conditions );
-		return $this->execute("update ".$this->table_name." set ".implode(', ', $setstr).$conditions["_where"], $conditions["_bindParams"] + $values);
-	}
-	public function delete($conditions)
-	{ # 删除数据
-		$conditions = $this->_where( $conditions );
-		return $this->execute("delete from ".$this->table_name.$conditions["_where"], $conditions["_bindParams"]);
-	}
-	public function create($row)
-	{ # 创建数据
-		$values = array();
-		foreach($row as $k=>$v){
-			$keys[] = "`{$k}`"; $values[":".$k] = $v; $marks[] = ":".$k;
-		}
-		$this->execute("insert into ".$this->table_name." (".implode(', ', $keys).") values (".implode(', ', $marks).")", $values);
-		return $this->dbInstance($GLOBALS['mysql'], 'master')->lastInsertId();
-	}
-	public function findCount($conditions)
-	{ # 获取总条数
-		$conditions = $this->_where( $conditions );
-		$count = $this->query("select count(*) c from ".$this->table_name.$conditions["_where"], $conditions["_bindParams"]);
-		return isset($count[0]['c']) && $count[0]['c'] ? $count[0]['c'] : 0;
-	}
-	public function dumpSql(){return $this->sql;}
-	public function pager($page, $pageSize = 10, $scope = 10, $total){
-		$this->page = null;
-		if($total > $pageSize){
-			$total_page = ceil($total / $pageSize);
-			$page = min(intval(max($page, 1)), $total);
-			$this->page = array(
-				'total_count' => $total, 
-				'page_size'   => $pageSize,
-				'total_page'  => $total_page,
-				'first_page'  => 1,
-				'prev_page'   => ( ( 1 == $page ) ? 1 : ($page - 1) ),
-				'next_page'   => ( ( $page == $total_page ) ? $total_page : ($page + 1)),
-				'last_page'   => $total_page,
-				'current_page'=> $page,
-				'all_pages'   => array(),
-				'offset'      => ($page - 1) * $pageSize,
-				'limit'       => $pageSize,
-			);
-			$scope = (int)$scope;
+	public $table;
+	protected $link = [], $conn, $sql,$exec = ['duplicate','join','where','group','having','order','limit'];
 
-			$min = max($page + 2,5);
-			$max = min($min,$total_page);
-			$act = max($max - 4,1);
-			$this->page['all_pages'] = range($act, $max);
-			/*
-			if($total_page <= $scope ){
-				$this->page['all_pages'] = range(1, $total_page);
-			}elseif( $page <= $scope/2) {
-				$this->page['all_pages'] = range(1, $scope);
-			}elseif( $page <= $total_page - $scope/2 ){
-				$right = $page + (int)($scope/2);
-				$this->page['all_pages'] = range($right-$scope+1, $right);
-			}else{
-				$this->page['all_pages'] = range($total_page-$scope+1, $total_page);
-			}*/
-		}
-		return $this->page;
+	public function __construct($table = null)
+	{ # 构造函数
+		if($table)$this->table = $table;
+		$this->conn = self::dbInstance();
 	}
-	public function query($sql, $params = array()){return $this->execute($sql, $params, true);}
-
-	public function execute($sql, $params = array(), $readonly = false){
-		$this->sql[] = $sql;
-		if($readonly && !empty($GLOBALS['mysql']['SLAVE'])){
-			$slave_key = array_rand($GLOBALS['mysql']['SLAVE']);
-			$sth = $this->dbInstance($GLOBALS['mysql']['SLAVE'][$slave_key], 'slave_'.$slave_key)->prepare($sql);
-		}else{
-			$sth = $this->dbInstance($GLOBALS['mysql'], 'master')->prepare($sql);
-		}
-		if(is_array($params) && !empty($params)){
-			foreach($params as $k => &$v){
-				if(is_int($v)){
-					$data_type = PDO::PARAM_INT;
-				}elseif(is_bool($v)){
-					$data_type = PDO::PARAM_BOOL;
-				}elseif(is_null($v)){
-					$data_type = PDO::PARAM_NULL;
-				}else{
-					$data_type = PDO::PARAM_STR;
-				}
-				$sth->bindParam($k, $v, $data_type);
-			}
-		}
-		if($sth->execute())return $readonly ? $sth->fetchAll(PDO::FETCH_ASSOC) : $sth->rowCount();
-		$err = $sth->errorInfo();
-		err('Database SQL: "' . $sql. '", ErrorInfo: '. $err[2], 1);
-	}
-
-	public function dbInstance($db_config, $db_config_key, $force_replace = false)
-	{ # 切换主数据库
-		if($force_replace || empty($GLOBALS['instances'][$db_config_key])){
-			try {
-				$GLOBALS['instances'][$db_config_key] = new PDO('mysql:dbname='.$db_config['DB'].';host='.$db_config['HOST'].';port='.$db_config['PORT'], $db_config['USER'], $db_config['PASS'], array(PDO::MYSQL_ATTR_INIT_COMMAND=>'SET NAMES \''.$db_config['CHARSET'].'\''));
-			}catch(PDOException $e){err('Database Err: '.$e->getMessage());}
-		}
-		return $GLOBALS['instances'][$db_config_key];
-	}
-	private function _where($conditions){
-		$result = array( "_where" => " ","_bindParams" => array());
-		if(is_array($conditions) && !empty($conditions)){
-			$fieldss = array(); $sql = null; $join = array();
-			if(isset($conditions[0]) && $sql = $conditions[0]) unset($conditions[0]);
-			foreach( $conditions as $key => $condition ){
-				if(substr($key, 0, 1) != ":"){
-					unset($conditions[$key]);
-					$conditions[":".$key] = $condition;
-				}
-				$join[] = "`{$key}` = :{$key}";
-			}
-			if(!$sql) $sql = join(" and ",$join);
-
-			$result["_where"] = " where ". $sql;
-			$result["_bindParams"] = $conditions;
+	public function action(callable $func)
+	{ # 事务执行
+		if (!is_callable($func)) return false;
+		$this->begin();
+		try {
+			($result = $func($this)) ? $this->commit() : $this->rollBack();
+		}catch (Exception $e) {
+			$this->link['master']->rollBack();
+			throw new Exception($e->getMessage());
 		}
 		return $result;
+	}
+	public function oneSql($sql,$param = [])
+	{ # 单条查询
+		self::dbInstance(true);
+		# 执行SQL
+		return self::execute($sql,$param)->fetch(PDO::FETCH_ASSOC);
+	}
+	public function allSql($sql,$param = [])
+	{ # 多条查询
+		self::dbInstance(true);
+		# 执行SQL
+		return self::execute($sql,$param)->fetchAll(PDO::FETCH_ASSOC);
+	}
+	public function runSql($sql,$param = [])
+	{ # 执行操作
+		self::dbInstance();
+		# 执行SQL
+		return self::execute($sql,$param)->rowCount();
+	}
+	public function begin()
+	{ # 开始事务
+		$this->link['master']->beginTransaction();
+	}
+	public function commit()
+	{ # 提交事务
+		$this->link['master']->commit();
+	}
+	public function rollBack()
+	{ # 回滚事务
+		$this->link['master']->rollBack();
+	}
+	public function table($table) : self
+	{ # 选择表
+		$this->table = $table;
+		return $this;
+	}
+	public function update(array $data) : self
+	{ # 更新数据
+		self::__init(__function__);
+		$this->sql = "update {$this->table}" . self::wo($data,'set',', ');
+		return $this;
+	}
+	public function insert(array $data) : self
+	{ # 新增数据
+		self::__init(__function__);
+		$this->sql = "{$this->run['first']} into {$this->table} ";
+		array_walk($data, function($v,$k) use(&$mark){$mark['k'][] = "`{$k}`";$mark['v'][":i_{$k}"] = $v; $mark['i'][] = ":i_{$k}";});
+		$this->run['bind'] += $mark['v'];
+		$this->sql .= "(". implode(', ', $mark['k'] ) .") values (" . implode(', ', $mark['i'] ) .")";
+		return $this;
+	}
+	public function delete() : self
+	{ # 删除数据
+		self::__init(__function__);
+		$this->sql = "{$this->run['first']} from {$this->table}";
+		return $this;
+	}
+	public function select($field = '*',$one = false) : self
+	{ # 查询数据
+		self::__init(__function__);
+		$this->run['sone'] = $one;$this->run['field'] = $field;
+		$this->sql = "{$this->run['first']} #field# from {$this->table}";
+		return $this;
+	}
+	public function duplicate($data) : self
+	{ # 重复更新
+		$this->run['duplicate'] = ' on duplicate key update ' . self::wo($data,'set',', ');
+		return $this;
+	}
+	public function join($table,$type = 'inner',$on = []) : self
+	{ # 数据联合
+		$this->run['fieldJoin'][] = "{$table}";
+		$this->run['join'] =  (isset($this->run['join']) ? " {$this->run['join']} {$type} join {$table}" : " {$type} join {$table}") . 
+			self::wo($on,'on');
+		return $this;
+	}
+	public function where(array $where) : self
+	{ # 条件设置
+		$this->run['where'] = self::wo($where);
+		return $this;
+	}
+	public function forup(string $_ = null)
+	{ # 表锁锁 必须是在事务中使用
+		$this->run['forup'] = " for update {$_}";
+	}
+	public function group(string $group) : self
+	{ # 字段分组
+		$this->run['group'] = " group by {$group}";
+		return $this;
+	}
+	public function having(string $having) : self
+	{ # 聚合过滤
+		$this->run['having'] = " having {$having}";
+		return $this;
+	}
+	public function order(string $order = 'id desc') : self
+	{ # 字段排序
+		$this->run['order'] = " order by {$order}";
+		return $this;
+	}
+	public function limit(string $limit) : self
+	{ # 固定条数
+		$this->run['limit'] = " limit {$limit}";
+		return $this;
+	}
+	public function run(bool $show = false)
+	{ # 执行操作
+		array_walk($this->exec, function($v,$k){$this->sql .= $this->run[$v] ?? null;});
+		if($this->run['first'] == 'select' && !empty($this->run['field'])) $this->sql = str_replace('#field#', self::getField($this->run['field']), $this->sql); 
+		if($show) return $this->sql;
+		$sth = self::execute($this->sql,$this->run['bind']);
+		$run = ['insert' => 'lastInsertId','select' => $this->run['sone'] ? 'fetch' : 'fetchAll'][$this->run['first']] ?? 'rowCount';
+		return strpos($run,'tch') ? $sth->$run(PDO::FETCH_NAMED) : $sth->$run();
+	}
+	private function __init($first = null)
+	{ # 净化变量
+		$this->run = null;
+		$this->run['bind'] = [];
+		$this->run['first'] = is_null($first) ?: $first; 
+	}
+	private function wo($where,$wo = 'where',$ao = ' and '): string
+	{ # 设计条件
+		if(!is_array($where) || empty($where)) return null;
+		$mark = ['join' => [],'where' => []];
+		array_walk($where, function($v,$k) use(&$mark,$wo){
+			if(gettype($k) == 'integer' ):
+				$mark['join'][] = $v;
+			elseif(!preg_match('/^:.*+/',$k)):
+				$kk =  str_replace('.','' ,$k);
+				$mark['join'][] = "{$k} = :{$wo}_{$kk}";
+				$mark['where'][":{$wo}_{$kk}"] = $v;
+			else:
+				$mark['where'][$k] = $v;
+			endif;
+		});
+		$this->run['bind'] += $mark['where'];
+		return " {$wo} ".join($ao,$mark['join']);
+	}
+	private function getField($field = '*')
+	{ # 获取字段
+		if(in_array($field,['*','!*'])) return $field;
+		if(!preg_match('/^!.*+/',$field)) return $field;
+		$fields = explode(',',substr(trim($field),1));
+		if(strpos(trim($this->table),' ')) $this->run['fieldJoin'][] = $this->table;
+		if(isset($this->run['fieldJoin']) && is_array($this->run['fieldJoin'])):
+			$sql = "select concat(case table_name ";
+			array_walk($this->run['fieldJoin'], function($v,$k) use(&$sql,&$tables){
+				$join = explode(' ',$v);$tables[] = "'{$join[0]}'";$joincount = count($join);
+				$sql .=  "when '{$join[0]}' then '" .  ($joincount>= 2 ? $join[$joincount-1] : $join[0] ) . ".' ";
+			});
+			$table = join(',', $tables);
+			$sql .= "end,column_name) from information_schema.columns where table_schema='{$GLOBALS['mysql']['DB']}' and table_name in ({$table})";
+		else:
+			$sql = "desc {$this->table}";
+		endif;
+		$fielda = self::execute($sql)->fetchAll(PDO::FETCH_COLUMN);
+		$res = $fields ? array_diff($fielda,$fields) : '*';
+		array_walk($res, function(&$v,$k){if(strpos($v, '.')) $v = explode('.', $v)[1];});
+		if($res != '*' ) $res = array_diff($res,$fields);
+		return implode(', ',  $res );
+	}
+	private function pdoTe(&$v)
+	{ # 获取类型
+		$v = in_array( $t = gettype($v), ['array', 'object']) ? serialize($v) : $v;
+		return 
+		[ 'integer' => PDO::PARAM_INT, 'boolean' => PDO::PARAM_BOOL, 'NULL' => PDO::PARAM_NULL, 'resource' => PDO::PARAM_LOB ]
+		[$v] ?? PDO::PARAM_STR;
+	}
+	private function execute($sql,$param = [])
+	{ # 执行
+		# 执行SQL
+		$sth = $this->conn->prepare($sql);
+		# 绑定参数
+		if(args($param,[],'a'))
+			array_walk($param, function(&$v,$k) use($sth){$sth->bindParam($k,$v,self::pdoTe($v));});
+		# 执行语句
+		if($sth->execute()) return $sth;
+		$err = $sth->errorInfo();
+		throw new Exception('Database SQL: "' . $sql. '", ErrorInfo: '. $err[2]);
+	}
+
+	private function dbInstance( $sm = false )
+	{ # 链接主从
+		list($conf,$k) = $sm && !empty($GLOBALS['mysql']['SLAVE'])?
+			[ $GLOBALS['mysql']['SLAVE'][($k = array_rand($GLOBALS['mysql']['SLAVE']))],'slave_'.$k]:
+			[ $GLOBALS['mysql'], 'master'];
+		if(empty($this->link[$k])){
+			try {
+				$this->link[$k] = new PDO(
+					'mysql:dbname='.$conf['DB'].';host='.$conf['HOST'].';port='.$conf['PORT'],
+					$conf['USER'],
+					$conf['PASS'],
+					[PDO::MYSQL_ATTR_INIT_COMMAND=>'SET NAMES \''.$conf['CHARSET'].'\'']);
+			}catch(PDOException $e){throw new Exception('Database Err: '.$e->getMessage());}
+		}
+		return $this->link[$k];
 	}
 }

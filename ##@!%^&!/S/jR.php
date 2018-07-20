@@ -2,6 +2,10 @@
 namespace jR;
 class jR
 {
+	# js@jsran.cn
+	# by 2018-07-20 司丙然
+	# PHP 7.0+
+	
 	private $class = [];
 	private $modsi = ['home','demo','index'];
 	public function __construct()
@@ -19,7 +23,6 @@ class jR
     }
 	private function roule()
 	{ # 处理路由
-		
 		if(!CLI && WEB) GOTO WEB;
 		$this->setDefine([ 'MOBILE' => 0, 'HOST' => 'php' ]);
 		$param = $_SERVER['argv'];
@@ -66,6 +69,7 @@ class jR
 			'S'=>$args['s']??$this->modsi[1],
 			'I'=>$args['i']??$this->modsi[2],
 		]);
+		array_map(function($v)use($args){call_user_func("self::{$v}",$args);},['urllog','defaulepic','webscan']);
 		self::runing(M,S,I,$args);
 	}
 	private function runing($module,$controller,$action,$args)
@@ -92,9 +96,26 @@ class jR
 	{ # 设置
 		array_walk($arr, function($v,$k){defined($k) or define($k,$v);});
 	}
-	public function setHook()
-	{ # 设置
-		dump('哎呀哟');
+	private function webscan($args)
+	{ # 安全过滤
+		$web = [
+			'switch'=> true, # 拦截开关
+			'white'	=> ['system'],
+			'scan'=>[
+				['Method'=>'GET','Kvalue'=>$_GET,'switch' => true,'filter'=>"\\<.+javascript:window\\[.{1}\\\\x|<.*=(&#\\d+?;?)+?>|<.*(data|src)=data:text\\/html.*>|\\b(alert\\(|confirm\\(|expression\\(|prompt\\(|benchmark\s*?\(.*\)|sleep\s*?\(.*\)|load_file\s*?\\()|<[a-z]+?\\b[^>]*?\\bon([a-z]{4,})\s*?=|^\\+\\/v(8|9)|\\b(and|or)\\b\\s*?([\\(\\)'\"\\d]+?=[\\(\\)'\"\\d]+?|[\\(\\)'\"a-zA-Z]+?=[\\(\\)'\"a-zA-Z]+?|>|<|\s+?[\\w]+?\\s+?\\bin\\b\\s*?\(|\\blike\\b\\s+?[\"'])|\\/\\*.*\\*\\/|<\\s*script\\b|\\bEXEC\\b|UNION.+?SELECT\s*(\(.+\)\s*|@{1,2}.+?\s*|\s+?.+?|(`|'|\").*?(`|'|\")\s*)|UPDATE\s*(\(.+\)\s*|@{1,2}.+?\s*|\s+?.+?|(`|'|\").*?(`|'|\")\s*)SET|INSERT\\s+INTO.+?VALUES|(SELECT|DELETE)@{0,2}(\\(.+\\)|\\s+?.+?\\s+?|(`|'|\").*?(`|'|\"))FROM(\\(.+\\)|\\s+?.+?|(`|'|\").*?(`|'|\"))|(CREATE|ALTER|DROP|TRUNCATE)\\s+(TABLE|DATABASE)",],['Method'=>'POST','Kvalue'=>$_POST,'switch'=>true,'filter'=> "<.*=(&#\\d+?;?)+?>|<.*data=data:text\\/html.*>|\\b(alert\\(|confirm\\(|expression\\(|prompt\\(|benchmark\s*?\(.*\)|sleep\s*?\(.*\)|load_file\s*?\\()|<[^>]*?\\b(onerror|onmousemove|onload|onclick|onmouseover)\\b|\\b(and|or)\\b\\s*?([\\(\\)'\"\\d]+?=[\\(\\)'\"\\d]+?|[\\(\\)'\"a-zA-Z]+?=[\\(\\)'\"a-zA-Z]+?|>|<|\s+?[\\w]+?\\s+?\\bin\\b\\s*?\(|\\blike\\b\\s+?[\"'])|\\/\\*.*\\*\\/|<\\s*script\\b|\\bEXEC\\b|UNION.+?SELECT\s*(\(.+\)\s*|@{1,2}.+?\s*|\s+?.+?|(`|'|\").*?(`|'|\")\s*)|UPDATE\s*(\(.+\)\s*|@{1,2}.+?\s*|\s+?.+?|(`|'|\").*?(`|'|\")\s*)SET|INSERT\\s+INTO.+?VALUES|(SELECT|DELETE)(\\(.+\\)|\\s+?.+?\\s+?|(`|'|\").*?(`|'|\"))FROM(\\(.+\\)|\\s+?.+?|(`|'|\").*?(`|'|\"))|(CREATE|ALTER|DROP|TRUNCATE)\\s+(TABLE|DATABASE)",],['Method'=>'COOKIE','Kvalue'=>$_COOKIE,'switch'=>true,'filter'=> "benchmark\s*?\(.*\)|sleep\s*?\(.*\)|load_file\s*?\\(|\\b(and|or)\\b\\s*?([\\(\\)'\"\\d]+?=[\\(\\)'\"\\d]+?|[\\(\\)'\"a-zA-Z]+?=[\\(\\)'\"a-zA-Z]+?|>|<|\s+?[\\w]+?\\s+?\\bin\\b\\s*?\(|\\blike\\b\\s+?[\"'])|\\/\\*.*\\*\\/|<\\s*script\\b|\\bEXEC\\b|UNION.+?SELECT\s*(\(.+\)\s*|@{1,2}.+?\s*|\s+?.+?|(`|'|\").*?(`|'|\")\s*)|UPDATE\s*(\(.+\)\s*|@{1,2}.+?\s*|\s+?.+?|(`|'|\").*?(`|'|\")\s*)SET|INSERT\\s+INTO.+?VALUES|(SELECT|DELETE)@{0,2}(\\(.+\\)|\\s+?.+?\\s+?|(`|'|\").*?(`|'|\"))FROM(\\(.+\\)|\\s+?.+?|(`|'|\").*?(`|'|\"))|(CREATE|ALTER|DROP|TRUNCATE)\\s+(TABLE|DATABASE)"
+				],
+			],
+		];
+		function arr_foreach($arr){static $str;static $keystr;if(!is_array($arr)){return $arr;}foreach($arr as $key=>$val){$keystr=$keystr.$key;if(is_array($val)){arr_foreach($val);}else{$str[]=$val.$keystr;}}return implode($str);}
+		if($web['switch'] && !in_array(M,$web['white'])){foreach($web['scan'] as $k=>$v){if($v['switch']){foreach($v['Kvalue'] as $kk=>$vv){$svv=arr_foreach($vv);if(preg_match("/".$v['filter']."/is",$kk)==1 || preg_match("/".$v['filter']."/is",$svv)==1){self::runing('home','base','nosql',$args);return false;}}}}}
+	}
+	private function defaulepic($args)
+	{ # 默认图片
+		if(empty($args) && preg_match("/.*\.(jpg|gif|png|bmp|jpeg)$/i",args($_SERVER['REQUEST_URI'],'m='.M.'s='.S.'i='.I,'s'))):header("Content-type: image/jpeg");exit(file_get_contents(PATH.DS.$GLOBALS['view']['image']));endif;
+	}
+	private function urllog($args)
+	{ # 请求记录
+		if($GLOBALS['urllog']['switch']):!is_dir($GLOBALS['urllog']['file'].date('/Ymd/H')) && mkdir($GLOBALS['urllog']['file'].date('/Ymd/H'),0755,true);file_put_contents($GLOBALS['urllog']['file'].date('/Ymd/H/i').'.log', "From:".get_client_ip()."\r\n".args($_SERVER['HTTP_X_POWERED_TOKEN_BY'])."\r\n".args($_SERVER['HTTP_X_CONTENT_TYPE'])."\r\n".'['.date('H:i:s').'] '.args($_SERVER['REQUEST_URI'],'m='.M.'s='.S.'i='.I,'s').' | '.var_export($args,true).PHP_EOL,FILE_APPEND);endif;
 	}
 	public function autoload($class)
 	{ # 自动加载

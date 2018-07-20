@@ -17,50 +17,48 @@ class demo extends Base
 		# 实例化一个M根类
 		$ob = new M;
 		dump($ob->OneSql("select name from s_config "));
-
-		dump($ob);
 		# 实例化一个M模型exit
-		$ob = new I\M;
+		# 事务执行
 		dump($ob->action(function($M){
-			dump($M->oneSql("select * from s_user where id = :id",[':id' => 10000]));
-			return ['asdsadsa'];
+			# dump($M->oneSql("select * from s_user where id = :id",[':id' => 10000]));
+			return ['我是事务中的返回'];
 		}));
+		# 联合查询
 		dump(
 			$ob->
-			table('s_user a')->
-			select('a.id,a.name,a.user')->
-			join('s_money b','inner',['a.id = b.uid and a.type > :t',':t' => 2])->
-			join('s_money_log c','inner',['c.uid = b.uid'])->
+			table('s_user as a')->
+			select('a.id,a.user,b.total,b.no_use_money,use_money,shou_money',true)->
+			join('s_user_money b','inner',['a.id = b.uid'])->
 			where(['a.id'=> 10000])->
-			limit('0,10')->
 			run(true)
 		);
-
+		# 更新一个数据
 		dump(
 			$ob->
 			table('s_user')->
 			update(['pass' => md5('123456'),'link = link + 1'])->
-			where(['id > :id','user = :user or real_name = :xx',':id'=>10001,':user'=>'hehe'])->
+			where(['id > :id','user = :user or real_name = :xx',':id'=>10001,':user'=>'hehe',':xx' => '呵呵哒'])->
 			run(true)
 		);
-
+		# 插入或更新
 		dump(
 			$ob->
 			insert(['user' => 'jsran', 'pass' => md5('123456')])->
-			duplicate(['link = link + 1','pass = values(pass)'])->
+			duplicate(['link = link + 1','pass = values(pass)','login_ip' => '1.1.1.1'])->
 			run(true)
 		);
 		# 查询单条数据
 		dump(
 			$ob->
-			select('!id,user,pass',true)->
+			# 排除指定字段
+			select('!id,user,pass,phone',true)->
 			where(['id' => 10000])->
 			run()
 		);
 		# 查询多条数据
 		dump(
 			$ob->
-			select('id,user,pass')->
+			select('id,user,pass,phone')->
 			where(['id' => 10000])->
 			run()
 		);
