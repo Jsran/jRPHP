@@ -53,7 +53,7 @@ class demo extends Base
 		# 查询单条数据
 		dump(
 			$ob->
-			select('id,user,pass',true)->
+			select('!id,user,pass',true)->
 			where(['id' => 10000])->
 			run()
 		);

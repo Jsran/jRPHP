@@ -80,10 +80,10 @@ class M
 		$this->sql = "{$this->run['first']} from {$this->table}";
 		return $this;
 	}
-	public function select($field = '*',$one = false) : self
+	public function select($field = '!*',$one = false) : self
 	{ # 查询数据
 		self::__init(__function__);
-		$this->run['sone'] = $one;
+		$this->run['sone'] = $one;$field = self::getField($field);
 		$this->sql = "{$this->run['first']} {$field} from {$this->table}";
 		return $this;
 	}
@@ -102,6 +102,10 @@ class M
 	{ # 条件设置
 		$this->run['where'] = self::wo($where);
 		return $this;
+	}
+	public function forup($_ = null)
+	{ # 表锁锁 必须是在事务中使用
+		$this->run['forup'] = " for update {$_}";
 	}
 	public function group(string $group) : self
 	{ # 字段分组
@@ -129,7 +133,7 @@ class M
 		if($show) return $this->sql;
 		$sth = self::execute($this->sql,$this->run['bind']);
 		$run = ['insert' => 'lastInsertId','select' => $this->run['sone'] ? 'fetch' : 'fetchAll'][$this->run['first']] ?? 'rowCount';
-		return strpos($run,'tch') ? $sth->$run(PDO::FETCH_ASSOC) : $sth->$run();
+		return strpos($run,'tch') ? $sth->$run(PDO::FETCH_NAMED) : $sth->$run();
 	}
 	private function __init($first = null)
 	{ # 净化变量
@@ -154,6 +158,15 @@ class M
 		});
 		$this->run['bind'] += $mark['where'];
 		return " {$wo} ".join($ao,$mark['join']);
+	}
+	private function getField($field)
+	{ # 获取字段
+		if(in_array($field,['*','!*'])) return $field;
+		if(!preg_match('/^!.*+/',$field)) return $field;
+		$field = substr(trim($field),1);
+		$fields =  explode(',',$field);
+		$fielda = self::execute("desc {$this->table}")->fetchAll(PDO::FETCH_COLUMN);
+		return implode(', ', $fields ? array_diff($fielda,$fields) : '*' );
 	}
 	private function pdoTe(&$v)
 	{ # 获取类型
