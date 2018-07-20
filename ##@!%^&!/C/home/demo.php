@@ -102,6 +102,10 @@ class demo extends Base
 		// dump($ob->projectQuery(['bid' => '143714']));
 		
 	}
+	public function hindex()
+	{
+		dump('我事手机转悠');
+	}
 	public function demos()
 	{
 		dump('I am demos!');

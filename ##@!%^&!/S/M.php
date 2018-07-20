@@ -208,7 +208,6 @@ class M
 		$err = $sth->errorInfo();
 		throw new Exception('Database SQL: "' . $sql. '", ErrorInfo: '. $err[2]);
 	}
-
 	private function dbInstance( $sm = false )
 	{ # 链接主从
 		list($conf,$k) = $sm && !empty($GLOBALS['mysql']['SLAVE'])?
