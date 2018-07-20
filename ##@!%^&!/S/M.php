@@ -1,5 +1,6 @@
 <?php
 namespace jR;
+use jR\I;
 use PDO;
 use Exception;
 class M
@@ -154,7 +155,7 @@ class M
 		array_walk($where, function($v,$k) use(&$mark,$wo){
 			if(gettype($k) == 'integer' ):
 				$mark['join'][] = $v;
-			elseif(!preg_match('/^:.*+/',$k)):
+			elseif(!I\RegExp::One(['/^:.*+/',$k])):
 				$kk =  str_replace('.','' ,$k);
 				$mark['join'][] = "{$k} = :{$wo}_{$kk}";
 				$mark['where'][":{$wo}_{$kk}"] = $v;
@@ -168,7 +169,7 @@ class M
 	private function getField($field = '*')
 	{ # 获取字段
 		if(in_array($field,['*','!*'])) return $field;
-		if(!preg_match('/^!.*+/',$field)) return $field;
+		if(!I\RegExp::One(['/^!.*+/',$field])) return $field;
 		$fields = explode(',',substr(trim($field),1));
 		if(strpos(trim($this->table),' ')) $this->run['fieldJoin'][] = $this->table;
 		if(isset($this->run['fieldJoin']) && is_array($this->run['fieldJoin'])):
