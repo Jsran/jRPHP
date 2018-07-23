@@ -79,12 +79,30 @@ $config = [
 	],
 	'debug' => true, # 调试开关`
 	'mysql' => [
-		'MYSQL_HOST' => '101.200.139.212',
-		'MYSQL_PORT' => '3306',
-		'MYSQL_USER' => 'demos',
-		'MYSQL_DB'   => 'baicai',
-		'MYSQL_PASS' => 'mimabudui',
-		'MYSQL_CHARSET' => 'utf8',
+		'HOST' => '101.200.139.212',
+		'PORT' => '3306',
+		'USER' => 'demos',
+		'DB'   => 'baicai',
+		'PASS' => 'mimabudui',
+		'CHARSET' => 'utf8',
+		'SLAVE' => [
+			[
+				'HOST' => '101.200.139.212',
+				'PORT' => '3306',
+				'USER' => 'demos',
+				'DB'   => 'baicai',
+				'PASS' => 'mimabudui',
+				'CHARSET' => 'utf8',
+			],
+			[
+				'HOST' => '101.200.139.212',
+				'PORT' => '3306',
+				'USER' => 'demos',
+				'DB'   => 'baicai',
+				'PASS' => 'mimabudui',
+				'CHARSET' => 'utf8',
+			],
+		],
 	],
 ];
 return $config;
