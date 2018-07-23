@@ -9,7 +9,6 @@ class demo extends Base
 
 	public function index()
 	{
-<<<<<<< HEAD
 		#文件夹操作
 		I\Folder::create(DATA.DS.'path');
 		#缓存操作
@@ -19,10 +18,8 @@ class demo extends Base
 		dump($Ca);
 
 		var_dump($this->is_post());die;
-=======
 		# 清理代码缓存
 		parent::opcache();
->>>>>>> 0c08e37ea42b20c6cce80a08f7deeb0d9c22fd99
 		dump(parent::$args);
 		dump("我是home模块的 demo 控制器中的 index动作!");
 		# 父层调用
