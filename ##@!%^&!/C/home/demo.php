@@ -8,6 +8,8 @@ class demo extends Base
 
 	public function index()
 	{
+		# 清理代码缓存
+		parent::opcache();
 		dump(parent::$args);
 		dump("我是home模块的 demo 控制器中的 index动作!");
 		# 父层调用
@@ -15,8 +17,17 @@ class demo extends Base
 		# 同类调用
 		self::demos();
 		# 实例化一个M根类
-		$ob = new M;
-		dump($ob->OneSql("select name from s_config "));
+		$ob = new M\User;
+		dump(
+			$ob->
+			# 排除指定字段
+			select('count(1) c,sum(id) e',true)->
+			having(['c >= :having_c',':having_c' => 1])->
+			where(['id' => 10000])->
+			run()
+		);
+		#dump($ob->OneSql("select name from s_config "));
+		#
 		# 实例化一个M模型exit
 		# 事务执行
 		dump($ob->action(function($M){
@@ -26,9 +37,9 @@ class demo extends Base
 		# 联合查询
 		dump(
 			$ob->
-			table('s_user as a')->
-			select('a.id,a.user,b.total,b.no_use_money,use_money,shou_money',true)->
-			join('s_user_money b','inner',['a.id = b.uid'])->
+			table('s_user a')->
+			select('!id,user,total,no_use_money,use_money,shou_money',true)->
+			leftjoin('s_user_money',['a.id = uid'])->
 			where(['a.id'=> 10000])->
 			run(true)
 		);
@@ -51,7 +62,7 @@ class demo extends Base
 		dump(
 			$ob->
 			# 排除指定字段
-			select('!id,user,pass,phone',true)->
+			select('id,user,pass,phone',true)->
 			where(['id' => 10000])->
 			run()
 		);
@@ -78,15 +89,15 @@ class demo extends Base
 		// }
 		# 插件实例化测试
 		// $Formula = new I\InterestFormula;
-		// print_r( 
+		// dump( 
 		//   $Formula->
-		// 	Money(120000)->
+		// 	Money(10000)->
 		// 	# 利率 8%
-		// 	Rate(0.08)->
+		// 	Rate(0.06)->
 		// 	# 期数
 		// 	Period(3)->
 		// 	# 回息公式
-		// 	Formula(1)->
+		// 	Formula(5)->
 		// 	# 利息管理 1.5%
 		// 	Manage(0.015)->
 		// 	# 平台加息 1.7%
@@ -94,7 +105,7 @@ class demo extends Base
 		// 	# 额外加息 0.5%
 		// 	EIRate(0.005)->
 		// 	# 计息时间
-		// 	InterestDate(1402948572)->
+		// 	InterestDate(1532059140)->
 		// 	Run()
 		// );
 		// $ob = new I\JCbank(['18399999999']);

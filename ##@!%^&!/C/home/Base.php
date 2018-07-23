@@ -16,4 +16,10 @@ class Base extends C
 		dump($msg);
 		exit;
 	}
+
+	public function opcache()
+	{
+		$call = function_exists('opcache_reset')? 'opcache_reset' : (function_exists('accelerator_reset')? 'accelerator_reset' : null);
+		if($call) call_user_func($call);
+	}
 }

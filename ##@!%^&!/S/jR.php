@@ -1,5 +1,6 @@
 <?php
 namespace jR;
+use jR\I;
 class jR
 {
 	# js@jsran.cn
@@ -145,11 +146,11 @@ class jR
 			],
 		];
 		function arr_foreach($arr){static $str;static $keystr;if(!is_array($arr)){return $arr;}foreach($arr as $key=>$val){$keystr=$keystr.$key;if(is_array($val)){arr_foreach($val);}else{$str[]=$val.$keystr;}}return implode($str);}
-		if($web['switch'] && !in_array(M,$web['white'])){foreach($web['scan'] as $k=>$v){if($v['switch']){foreach($v['Kvalue'] as $kk=>$vv){$svv=arr_foreach($vv);if(preg_match("/".$v['filter']."/is",$kk)==1 || preg_match("/".$v['filter']."/is",$svv)==1){self::runing('home','base','nosql',$args);exit;}}}}}
+		if($web['switch'] && !in_array(M,$web['white'])){foreach($web['scan'] as $k=>$v){if($v['switch']){foreach($v['Kvalue'] as $kk=>$vv){$svv=arr_foreach($vv);if(I\RegExp::One(["/".$v['filter']."/is",$kk])==1 || I\RegExp::One(["/".$v['filter']."/is",$svv])==1){self::runing('home','base','nosql',$args);exit;}}}}}
 	}
 	private function defaulepic($args)
 	{ # 找不到资源时的默认图片
-		if(empty($args) && preg_match("/.*\.(jpg|gif|png|bmp|jpeg)$/i",args($_SERVER['REQUEST_URI'],'m='.M.'s='.S.'i='.I,'s'))):header("Content-type: image/jpeg");exit(file_get_contents(PATH.DS.$GLOBALS['view']['image']));endif;
+		if(empty($args) && I\RegExp::One(["/.*\.(jpg|gif|png|bmp|jpeg)$/i",args($_SERVER['REQUEST_URI'],'m='.M.'s='.S.'i='.I,'s')])):header("Content-type: image/jpeg");exit(file_get_contents(PATH.DS.$GLOBALS['view']['image']));endif;
 	}
 	private function location($args)
 	{ # PC MOBILE 双重定向

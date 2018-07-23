@@ -3,7 +3,7 @@ namespace jR\M;
 use jR\M;
 class User extends M
 {
-	public $table_name = "s_user";
+	public $table = "s_user";
 
 	public function login($user,$pass)
 	{ # 登录验证

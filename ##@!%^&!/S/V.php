@@ -43,7 +43,7 @@ class V{
 		$template_data = file_get_contents($file); 
 		$template_data = $this->_compile_struct($template_data);
 		$template_data = $this->_compile_function($template_data);
-		$template_data = '<?php if(!class_exists("\jR\V", false)) exit("no direct access allowed");?>'.$template_data;
+		$template_data = "<?php \nnamespace jR;\nif(!class_exists('V', false)) exit('no direct access allowed');\n?>\n".$template_data;
 		$this->_clear_compliedfile($tempalte_name);
 		# file_put_contents($complied_file, $template_data);
 		# 避免高并发下导致的编译文件写不全

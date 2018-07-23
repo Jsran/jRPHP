@@ -97,12 +97,24 @@ class M
 		$this->run['duplicate'] = ' on duplicate key update ' . self::wo($data,'set',', ');
 		return $this;
 	}
-	public function join($table,$type = 'inner',$on = []) : self
+	private function join($table,$type = 'inner',$on = []) : self
 	{ # 数据联合
 		$this->run['fieldJoin'][] = "{$table}";
 		$this->run['join'] =  (isset($this->run['join']) ? " {$this->run['join']} {$type} join {$table}" : " {$type} join {$table}") . 
 			self::wo($on,'on');
 		return $this;
+	}
+	public function leftjoin($table,$on = []) : self
+	{
+		return self::join($table,'left',$on);
+	}
+	public function innerjoin($table,$on = []) : self
+	{
+		return self::join($table,'inner',$on);
+	}
+	public function rightjoin($table,$on = []) : self
+	{
+		return self::join($table,'right',$on);
 	}
 	public function where(array $where) : self
 	{ # 条件设置
@@ -118,9 +130,9 @@ class M
 		$this->run['group'] = " group by {$group}";
 		return $this;
 	}
-	public function having(string $having) : self
+	public function having(array $having) : self
 	{ # 聚合过滤
-		$this->run['having'] = " having {$having}";
+		$this->run['having'] = self::wo($having,'having');
 		return $this;
 	}
 	public function order(string $order = 'id desc') : self
@@ -180,6 +192,7 @@ class M
 			});
 			$table = join(',', $tables);
 			$sql .= "end,column_name) from information_schema.columns where table_schema='{$GLOBALS['mysql']['DB']}' and table_name in ({$table})";
+			echo $sql;
 		else:
 			$sql = "desc {$this->table}";
 		endif;
