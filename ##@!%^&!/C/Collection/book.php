@@ -6,6 +6,36 @@ class book extends Base
 {
 	public $layout = null;
 
+	# 创建表结构
+	# CREATE TABLE `s_category` (
+	#  `Id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增编号',
+	#  `Title` varchar(30) NOT NULL COMMENT '类名',
+	#  `Introduction` text COMMENT '简介',
+	#  PRIMARY KEY (`Id`)
+	# ) ENGINE=InnoDB AUTO_INCREMENT=120 DEFAULT CHARSET=utf8 COMMENT='小说分类表'
+	# 
+	# CREATE TABLE `s_information` (
+	#  `Id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增编号',
+	#  `Title` varchar(30) NOT NULL COMMENT '书名',
+	#  `Author` varchar(30) NOT NULL COMMENT '作者',
+	#  `Introduction` text COMMENT '简介',
+	#  `Tid` tinyint(1) NOT NULL COMMENT '分类',
+	#  `Bfrom` varchar(255) DEFAULT '' COMMENT '来源',
+	#  `state` tinyint(1) DEFAULT '0' COMMENT '状态 0 连载中 1 已完结',
+	#  PRIMARY KEY (`Id`)
+	# ) ENGINE=InnoDB AUTO_INCREMENT=12000 DEFAULT CHARSET=utf8 COMMENT='基本信息表'
+	# 
+	# CREATE TABLE `s_chapter` (
+	#  `Id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT '自增编号',
+	#  `Iid` int(11) NOT NULL DEFAULT '0' COMMENT '小说编号',
+	#  `Title` varchar(50) NOT NULL COMMENT '节名',
+	#  `Content` text COMMENT '章节内容',
+	#  PRIMARY KEY (`Id`),
+	#  UNIQUE KEY `Id` (`Id`),
+	#  KEY `Iid` (`Iid`),
+	#  FULLTEXT KEY `ft_finds` (`Title`,`Content`)
+	# ) ENGINE=MyISAM AUTO_INCREMENT=120000 DEFAULT CHARSET=utf8 COMMENT='章节信息表'
+
 	public function index()
 	{
 		$id = args(parent::$args['id'],0,'d');

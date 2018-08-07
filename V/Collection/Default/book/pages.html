@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>{$conf.Title} - 章节目录</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">  
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">  
+	<!--自动适应移动屏幕-->  
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">  
+	<!--优先使用webkit内核渲染-->  
+	<meta name="renderer" content="webkit">  
+	<!--不要被百度转码-->  
+	<meta http-equiv="Cache-Control" content="no-siteapp"/>  
+	<link rel="stylesheet" type="text/css" href="__THEMES__/css/noval.css">
+	
+</head>
+<body>
+	<div class="wrapper">
+		<div id="detailInfo">
+			<div class="Header global-flex">
+				<!-- 返回按钮 -->
+				<a class="back"><i class="bi bi-arrow-left"></i></a>
+				<h1 class="title global-cut">{$conf.Title}</h1>
+			</div>
+			<!-- 小说的作者 -->
+			<div class="bookInfo">
+				<div class="global-flex bookIntro">
+					<img src="">
+					<div class="global-flex-1">
+						<h2 class="global-cut book-name">{$conf.Title}</h2>
+						<p>作者：
+							<a href="https://m.baidu.com/s?word=火星引力">{$conf.Author}</a>
+						</p>
+						<p>
+							分类：
+							<a >{$conf.cType}</a>
+						</p>
+						<p>来源：
+							<span class="transcode">
+								<span>{$conf.Bfrom}</span>
+							</span>
+						</p>
+					</div>
+				</div>
+				<div class="bookAction actionTranscode">
+					<a data-log="continueRead" class="global-flex-1 active global-btn-radius start-read-transcode">继续阅读</a>
+				</div>
+			</div>
+			<!-- 章节进度  -->
+			<div id="bookInfo">
+				<div class="detail-block readed-info">
+					<!-- 已读 -->
+					<!-- <p class="">
+						
+						<span class="global-icon-bg-green">已读</span>
+						<a href="http://www.shuge.net/html/111/111966/6611187.html" class="global-cut invoke" id="J-readed" data-title="第1178章 再战洛长安 " data-index="1181">第1178章 再战洛长安 </a>
+					</p> -->
+					<p><span class="global-icon-bg-orange">最新</span>
+						<a href="{url m='Collection' s='book' i='index' tid=$conf.Iid id=$conf.Id}" class="invoke" >{$conf.sBook}</a>
+					</p>
+				</div>
+				<div class="detail-block description">
+					<h3>内容简介</h3>
+					<p class="">{$conf.Introduction}</p>
+				</div>
+			</div>
+			<!-- 目录列表 -->
+			<div id="chapterInfo">
+				<div class="detail-block chapter-info">
+					<div class="chapter-catalog clearfix">
+						<span class="global-left">目录：</span>
+						<span class="global-right chapter-order invoke" id="chapterOrderBtn" data-order="1">反序</span>
+					</div>
+					<!-- 章节列表 -->
+					<div id="J-chapterlist" class="chapter-catalog-wrap">
+
+						
+					</div>
+					<div class="global-flex paging-action clearfix">
+						<div class="pre-page invoke" id="J-prePageBtn">上一页</div>
+						<div class="page-select invoke" >
+							<!-- 页码 -->
+							<span id="J-currentPage" class="global-hightlight">1</span> / <span id="allPage">{$conf.Pages}</span><i class="bi bi-caret-down"></i>
+						</div>
+						<div class="next-page invoke active" id="J-nextPageBtn">下一页</div>
+					</div>
+				</div>
+				<!-- 页码 -->
+				<div class="page-list" id="J-pageList">
+					<div class="page-list-title">分页<span class="bi bi-close invoke closePage" >×</span></div>
+					<ul>
+						<?php for ($i=1;$i <= $conf['Pages']; $i++):?>
+						<li class="center invoke" data-index="<?php echo $i; ?>">第 <?php echo $i; ?> 页</li>
+						<?php endfor; ?>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<script type="text/javascript" src="__THEMES__/js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript">
+	// 小说的id
+	var id = '{$conf.Iid}';
+	// 默认正序
+	order = "1";
+	// 页码框
+	$(".page-select").click(function(){ 
+		$(".page-list").css('transform','translate(0px,0px)');
+	});
+	$(".closePage").click(function(){ 
+		$(".page-list").css({'transform':'translate(0px,800px)'});
+	})
+	// 刷新页面加载最后一页目录
+	$.ajax({
+		type: 'get',
+		url: "{url m='Collection' s='book' i='pages'}",
+		dataType: 'html',
+		data:{ 
+			id:id,
+			page:"1",
+			order:order
+		},
+		beforeSend:function(){},
+		success: function (data) { 
+			$("#J-chapterlist").append(data);//每次请求追加5个ul,每个ul里10条数据
+			//加载最后一页
+			$('#J-chapterlist ul[data-index="1"]').addClass('chapter-ul-selected').siblings().removeClass('chapter-ul-selected');
+           
+        }
+    })
+    // 正序1/反序2
+    $("#chapterOrderBtn").click(function(e){ 
+    	$("#J-currentPage").text("1");
+    	var order = $(e.target).attr('data-order');
+    	$("#chapterInfo .paging-action .pre-page").css({'color':'#aaa'}).attr('disabled','disabled');
+
+    	if(order == "1"){ //请求反序
+    		order = "2";
+    		$(e.target).attr('data-order','2').text("正序");
+    	}else if(order == "2"){ //请求正序
+    		order = "1";
+    		$(e.target).attr('data-order','1').text("反序");
+    	}
+    	$.ajax({
+			type: 'get',
+			url: "{url m='Collection' s='book' i='pages'}",
+			dataType: 'html',
+			data:{ 
+				id:id,
+				page:"1",
+				order:order
+			},
+			beforeSend:function(){},
+			success: function (data) { 
+				console.log(data);
+				$("#J-chapterlist").html("");
+				$("#J-chapterlist").append(data);//每次请求追加5个ul,每个ul里10条数据
+				//加载最后一页
+				$('#J-chapterlist ul[data-index="1"]').addClass('chapter-ul-selected').siblings().removeClass('chapter-ul-selected');
+	           
+	        }
+	    })
+
+    })
+    // 上下页颜色
+		var currentPage = $("#J-currentPage").text(); //当前页码
+		var allPage = $("#allPage").text(); //总页码
+		if(currentPage == "1" ){
+			$("#chapterInfo .paging-action .pre-page").css({'color':'#aaa'}).attr('disabled','disabled');
+			$("#chapterInfo .paging-action .next-page").css({'color':'#dd5114'});
+		}else if(currentPage == allPage){
+			$("#chapterInfo .paging-action .next-page").css({'color':'#aaa'}).attr('disabled','disabled');
+			$("#chapterInfo .paging-action .pre-page").css({'color':'#dd5114'});
+		}else{ 
+			$("#chapterInfo .paging-action .next-page").css({'color':'#dd5114'});
+			$("#chapterInfo .paging-action .pre-page").css({'color':'#dd5114'});
+	}
+
+	// 翻页
+	function page(num){ 
+		// 上下页颜色
+		var currentPage = $("#J-currentPage").text(); //当前页码
+		var allPage = $("#allPage").text(); //总页码
+		if(currentPage == "1" ){
+			$("#chapterInfo .paging-action .pre-page").css({'color':'#aaa'});
+			$("#chapterInfo .paging-action .next-page").css({'color':'#dd5114'});
+		}else if(currentPage == allPage){
+			$("#chapterInfo .paging-action .next-page").css({'color':'#aaa'});
+			$("#chapterInfo .paging-action .pre-page").css({'color':'#dd5114'});
+		}else{ 
+			$("#chapterInfo .paging-action .next-page").css({'color':'#dd5114'});
+			$("#chapterInfo .paging-action .pre-page").css({'color':'#dd5114'});
+		}
+
+		var pageLen = $("#J-chapterlist ul");
+		for(var i = 0;i< pageLen.length ;i++){
+			var nowUl = $(pageLen[i]).attr('data-index');
+			if(num ==  nowUl){ //页面中存在点击的第几页，不需要请求
+				console.log($('#J-chapterlist ul[data-index='+num+']'));
+				$('#J-chapterlist ul[data-index='+num+']').addClass('chapter-ul-selected').siblings().removeClass('chapter-ul-selected');
+				$(".page-list").css({'transform':'translate(0px,800px)'});
+				off = false;
+				return false;
+			}else{
+				off = true;
+			}
+		}
+		if(off){ //不存在，需要请求
+			var jPage = parseInt(num/5)+1;// 请求第几页选择的为第几组,一页5条ul，一个ul里10条li。1开始
+			var jPage2 = num%5;
+			// console.log(jPage2);
+			if(jPage2 == 0){ 
+				jPage = jPage-1;
+			}
+			// 查看是正序还是反序
+			var order = $("#chapterOrderBtn").attr('data-order');
+			$.ajax({
+				type: 'get',
+				url: "https://www.gcs.fun/book/pages.do",
+				dataType: 'html',
+				data:{ 
+					id:id,
+					page:jPage,
+					order:order
+				},
+				beforeSend:function(){},
+				success: function (data) { 
+					console.log(data)
+	        			$("#J-chapterlist").append(data);//每次请求追加5个ul,每个ul里10条数据
+	        			$('#J-chapterlist ul[data-index='+num+']').addClass('chapter-ul-selected').siblings().removeClass('chapter-ul-selected');
+						$(".page-list").css({'transform':'translate(0px,800px)'});
+	               
+	            }
+	        })
+		}
+	}
+	// 直接选择页码
+	var off = true;
+	$(".page-list li").click(function(e){ 
+		var pageNum = Number($(e.target).attr('data-index'));
+		$("#J-currentPage").text(pageNum);
+		page(pageNum);
+
+	})
+	// 上一页
+	$("#J-prePageBtn").click(function(){
+		var currentPage = Number($("#J-currentPage").text())-1;
+		if(currentPage != "0"){ 
+			$("#chapterInfo .paging-action .pre-page").css({'color':'#dd5114'});
+			$("#J-currentPage").text(currentPage);
+			page(currentPage);
+		}else{
+			$("#chapterInfo .paging-action .pre-page").css({'color':'#aaa'});
+		}
+	})
+	// 下一页
+	$("#J-nextPageBtn").click(function(){
+		var currentPage = Number($("#J-currentPage").text())+1;
+		console.log(currentPage);
+		var allPage = $("#allPage").text(); //总页码
+		console.log(allPage);
+		if(currentPage <= allPage){ 
+			$("#chapterInfo .paging-action .next-page").css({'color':'#dd5114'});
+			$("#J-currentPage").text(currentPage);
+			page(currentPage);
+		}else{
+			$("#chapterInfo .paging-action .next-page").css({'color':'#aaa'});
+		}
+	})
+	</script>
+</body>
+</html>
