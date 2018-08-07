@@ -41,7 +41,7 @@ class book extends Base
 		$id = args(parent::$args['id'],0,'d');
 		$tid = args(parent::$args['tid'],0,'d');
 		$ob = new M('s_chapter');
-		$text = $ob->table('s_chapter a')->select('a.Iid,a.Title,a.Content,b.Title name',true)->leftjoin('s_information b',['a.Iid = b.Id'])->where(['a.Id' => $id,'a.Iid' => $tid])->run();
+		$text = $ob->table('s_chapter a')->select('a.Iid Tid,a.Title,a.Content,b.Title Book',true)->leftjoin('s_information b',['a.Iid = b.Id'])->where(['a.Id' => $id,'a.Iid' => $tid])->run();
 		if(!$text) parent::err404('该章节不存在!');
 		array_walk($text, function($v,$k){$this->$k = $v;});
 		if($prev = $ob->select('Id',true)->where(['Id < :Id','Iid' => $tid,':Id' => $id])->order('Id desc')->limit('1')->run()) $this->prev = $prev['Id'];
