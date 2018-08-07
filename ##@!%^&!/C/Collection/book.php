@@ -43,10 +43,7 @@ class book extends Base
 		$ob = new M('s_chapter');
 		$text = $ob->table('s_chapter a')->select('a.Iid,a.Title,a.Content,b.Title name',true)->leftjoin('s_information b',['a.Iid = b.Id'])->where(['a.Id' => $id,'a.Iid' => $tid])->run();
 		if(!$text) parent::err404('该章节不存在!');
-		$this->Book = $text['name'];
-		$this->Tid = $text['Iid'];
-		$this->Title = $text['Title'];
-		$this->Content = $text['Content'];
+		array_walk($text, function($v,$k){$this->$k = $v;});
 		if($prev = $ob->select('Id',true)->where(['Id < :Id','Iid' => $tid,':Id' => $id])->order('Id desc')->limit('1')->run()) $this->prev = $prev['Id'];
 		if($next = $ob->select('Id',true)->where(['Id > :Id','Iid' => $tid,':Id' => $id])->order('Id asc')->limit('1')->run()) $this->next = $next['Id'];
 
@@ -86,7 +83,7 @@ class book extends Base
 			leftjoin('s_category c',['b.Tid = c.Id'])->
 			where(['a.Iid'=> $id])->
 			run();
-			if(!$this->conf) parent::err404('该书不存在!');
+			if(is_null($this->conf['Iid'])) parent::err404('该书不存在!');
 			$res = $ob->
 			table('s_chapter')->
 			select('Title',true)->
