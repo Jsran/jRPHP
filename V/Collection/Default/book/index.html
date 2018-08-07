@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>{$Book} -- {$Title}</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">  
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">  
+	<!--自动适应移动屏幕-->  
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">  
+	<!--优先使用webkit内核渲染-->  
+	<meta name="renderer" content="webkit">  
+	<!--不要被百度转码-->  
+	<meta http-equiv="Cache-Control" content="no-siteapp"/>  
+	<style type="text/css">
+		html,body{
+			background: #efeeed;
+		}
+		.wrapper{
+			width: 95%;
+			margin: auto;
+		}
+		.tit{
+			text-align: center;
+		}
+		.txt-content p{
+			font-size: 15px;
+			color: #444;
+			text-indent: 2em;
+			line-height: 23px;
+		}
+		.link-btn{
+			text-align: center;
+			margin-top: 20px;
+			padding-bottom: 20px;
+		}
+		.link-btn a{
+			width: 27%;
+			display: inline-block;
+			text-decoration: none;
+			border: 1px solid #ccc;
+			padding: 3px 0px;
+			background-color: #fff;
+			color: #333;
+			border-radius: 4px;
+			font-size: 16px;
+			margin-left: 2%;
+		}
+		.backdrop{
+			position: fixed;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			background-color: black;
+			z-index:998;
+			opacity: 0.5;
+			display: none;
+		}
+		.bg-btn{
+			z-index: 100;
+			position: fixed;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			z-index:999;
+			display: none;
+		}
+		.bg-link{
+			height: 100%;
+			display: flex;
+			align-items: center;
+		}
+		.bg-link a{
+			background: #333;
+			color: #fff;
+			padding: 5px 10px;
+			text-decoration: none;
+			border-radius: 4px;
+		}
+		.drop-link{
+			width: 90%;
+			margin: auto;
+		}
+	</style>
+</head>
+<body>
+	<div class="wrapper">
+		<h3 class="tit">{$Title}</h3>
+		<div class="txt-content">
+			{$Content nofilter}
+		</div>
+		<div class="link-btn">
+			<a href="{if isset($prev)}{url m='Collection' s='book' i='index' tid=$Tid id=$prev}{else}#{/if}" class="linkPrev">上一章</a>
+			<a href="#" class="linkIndex">章节目录</a>
+			<a href="{if isset($next)}{url m='Collection' s='book' i='index' tid=$Tid id=$next}{else}#{/if}" class="linkIndex">下一章</a>
+		</div>
+	</div>
+	<!-- 点击屏幕遮罩 -->
+	<div class="backdrop" ></div>
+	<div class="bg-btn">
+		<div class="bg-link">
+			<div class="drop-link">
+				<a href="{if isset($prev)}{url m='Collection' s='book' i='index' tid=$Tid id=$prev}{else}#{/if}" class="linkPrev" style="float: left;">上一章</a>
+				<a href="{if isset($next)}{url m='Collection' s='book' i='index' tid=$Tid id=$next}{else}#{/if}" class="linkIndex" style="float: right;">下一章</a>
+			</div>
+			
+		</div>
+		
+	</div>
+	<script type="text/javascript" src="__THEMES__/js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript">
+		$(".txt-content").click(function(){
+			$(".backdrop,.bg-btn").fadeIn();
+		})
+		$(".bg-link").click(function(event){ 
+			$(".backdrop,.bg-btn").css('display','none');
+		})
+	</script>
+</body>
+</html>
