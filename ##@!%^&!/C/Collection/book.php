@@ -101,7 +101,7 @@ class book extends Base
 		# 4520  战旗凌霄
 		# 20690 太古龙象诀
 		# 13911 逆天邪神
-		# 支持CLI模式
+		# 支持CLI模式 php index.php m=Collection s=book i=yunlaige id=13911
 		parent::opcache();
 		$id = args(parent::$args['id'],0,'d');
 		if(($len = strlen($id)) >=4 ) $tid = substr($id, 0,$len-3);
