@@ -104,6 +104,7 @@ class jR
 		# 运行模式
 		$this->setDefine(['CLI' => PHP_SAPI === 'cli','WEB' => strpos(PHP_SAPI,'apache') !== false || strpos(PHP_SAPI,'cgi') !== false]);
 		# 配置文件
+		is_file(PATH. DS . CORE. DS . "config.php") or file_put_contents(PATH. DS . CORE. DS . "config.php","<?php\r\n return ['debug'=>true,'site'=>['theme'=>['home'=>'Default']],'urllog'=>['switch'=>true,'file'=>PATH.DS.'O'.DS.'url_log'],'rewrite'=>['bhome/<id>.do'=>'Collection/book/pages','rd/<tid>/<id>.do'=>'Collection/book/index','colle/<id>.do'=>'Collection/book/yunlaige','book/<i>.do'=>'Collection/book/<i>','home.do'=>'demo/index','<s>/<i>.do'=>'<s>/<i>'],'model'=>['Mobile'=>['home'],'bindParam'=>['home/demo/index'=>'home/demo/hindex']],'view'=>['image'=>'Entry/not.jpg','cache'=>PATH.DS.'O'.DS.'cache','theme'=>PATH.DS.'V','left'=>'{','right'=>'}','sep'=>'/','suffix'=>'.html','contentReplace'=>[],'style'=>['home/Default/Computer'=>'HOMEPC','home/Default/Mobile'=>'HOMEH5','Collection/Default'=>'sbook']],'mysql'=>['HOST'=>'localhost','PORT'=>'3306','USER'=>'root','DB'=>'sbook','PASS'=>'root','CHARSET'=>'utf8','SLAVE'=>[['HOST'=>'localhost','PORT'=>'3306','USER'=>'root','DB'=>'sbook','PASS'=>'root','CHARSET'=>'utf8']]]];");
 		$GLOBALS += require PATH. DS . CORE. DS. 'config.php';
 		# 公共方法
         include PATH. DS . CORE. DS. 'function.php';
