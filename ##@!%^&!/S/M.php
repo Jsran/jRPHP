@@ -29,17 +29,17 @@ class M
 		}
 		return $result;
 	}
-	public function oneSql($sql,$param = [])
+	public function oneSql($sql,$param = [],$type = PDO::FETCH_ASSOC)
 	{ # 单条查询
 		self::dbInstance(true);
 		# 执行SQL
-		return self::execute($sql,$param)->fetch(PDO::FETCH_ASSOC);
+		return self::execute($sql,$param)->fetch($type);
 	}
-	public function allSql($sql,$param = [])
+	public function allSql($sql,$param = [],$type = PDO::FETCH_ASSOC)
 	{ # 多条查询
 		self::dbInstance(true);
 		# 执行SQL
-		return self::execute($sql,$param)->fetchAll(PDO::FETCH_ASSOC);
+		return self::execute($sql,$param)->fetchAll($type);
 	}
 	public function runSql($sql,$param = [])
 	{ # 执行操作
@@ -94,13 +94,13 @@ class M
 	}
 	public function duplicate($data) : self
 	{ # 重复更新
-		$this->run['duplicate'] = ' on duplicate key update ' . self::wo($data,'set',', ');
+		$this->run['duplicate'] = ' on duplicate key update' . self::wo($data,'set',', ');
 		return $this;
 	}
 	private function join($table,$type = 'inner',$on = []) : self
 	{ # 数据联合
 		$this->run['fieldJoin'][] = "{$table}";
-		$this->run['join'] =  (isset($this->run['join']) ? " {$this->run['join']} {$type} join {$table}" : " {$type} join {$table}") . 
+		$this->run['join'] =  (isset($this->run['join']) ? "{$this->run['join']} {$type} join {$table}" : " {$type} join {$table}") . 
 			self::wo($on,'on');
 		return $this;
 	}
@@ -151,8 +151,8 @@ class M
 		if($this->run['first'] == 'select' && !empty($this->run['field'])) $this->sql = str_replace('#field#', self::getField($this->run['field']), $this->sql); 
 		if($show) return $this->sql;
 		$sth = self::execute($this->sql,$this->run['bind']);
-		$run = ['insert' => 'lastInsertId','select' => $this->run['sone'] ? 'fetch' : 'fetchAll'][$this->run['first']] ?? 'rowCount';
-		return strpos($run,'tch') ? $sth->$run(PDO::FETCH_NAMED) : $sth->$run();
+		$run = ['insert' => 'lastInsertId','select' => isset($this->run['sone']) && $this->run['sone'] ? 'fetch' : 'fetchAll'][$this->run['first']] ?? 'rowCount';
+		return strpos($run,'tch') ? $sth->$run(PDO::FETCH_NAMED) : ( strpos($run,'ser') ? $this->link['master']->$run() : $sth->$run());
 	}
 	private function __init($first = null)
 	{ # 净化变量

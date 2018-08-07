@@ -43,7 +43,7 @@ class V{
 		$template_data = file_get_contents($file); 
 		$template_data = $this->_compile_struct($template_data);
 		$template_data = $this->_compile_function($template_data);
-		$template_data = "<?php \nnamespace jR;\nif(!class_exists('V', false)) exit('no direct access allowed');\n?>\n".$template_data;
+		$template_data = "<?php if(!class_exists('\jR\V', false)) exit('no direct access allowed');?>\n".$template_data;
 		$this->_clear_compliedfile($tempalte_name);
 		# file_put_contents($complied_file, $template_data);
 		# 避免高并发下导致的编译文件写不全
@@ -67,13 +67,14 @@ class V{
 			'<{(\$[\$\w\.\"\'\[\]]+?)\snofilter\s*}>'  => '<?php echo $1; ?>',
 			'<{(\$[\w\_\"\'\[\]]+?)\s*=(.*?)\s*}>'     => '<?php $1 =$2; ?>', 
 			'<{(\$[\$\w\.\"\'\[\]]+?)\s*}>'            => '<?php echo htmlspecialchars($1, ENT_QUOTES, "UTF-8"); ?>', 
-			'<{([A-Z\_]+)}>'            => '<?php echo $1; ?>', 
+			
 			'<{if\s*(.+?)}>'          => '<?php if ($1) : ?>',
 			'<{else\s*if\s*(.+?)}>'   => '<?php elseif ($1) : ?>',
 			'<{else}>'                => '<?php else : ?>',
 			'<{break}>'               => '<?php break; ?>',
 			'<{continue}>'            => '<?php continue; ?>',
 			'<{\/if}>'                => '<?php endif; ?>',
+			'<{([A-Z\_]+)}>'            => '<?php echo $1; ?>', 
 			'<{foreach\s*(\$[\w\.\_\"\'\[\]]+?)\s*as(\s*)\$([\w\_\"\'\[\]]+?)}>' => $foreach_inner_before.'<?php foreach( $1 as $$3 ) : ?>'.$foreach_inner_after,
 			'<{foreach\s*(\$[\w\.\_\"\'\[\]]+?)\s*as\s*(\$[\w\_\"\'\[\]]+?)\s*=>\s*\$([\w\_\"\'\[\]]+?)}>'  => $foreach_inner_before.'<?php foreach( $1 as $2 => $$3 ) : ?>'.$foreach_inner_after,
 			'<{\/foreach}>'           => '<?php endforeach; ?>',

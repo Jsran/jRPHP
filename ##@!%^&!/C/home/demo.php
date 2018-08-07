@@ -2,6 +2,8 @@
 namespace jR\C\home;
 use jR\M;
 use jR\I;
+use DOMDocument;
+use DOMXPAth;
 class demo extends Base
 {
 	public $layout = null;
@@ -111,6 +113,27 @@ class demo extends Base
 		// $ob = new I\JCbank(['18399999999']);
 		// $ob::$Fuid = ['18399999999','18305555555'];
 		// dump($ob->projectQuery(['bid' => '143714']));
+		// 
+		// $content= file_get_contents('http://php.net');
+		// $document = new DOMDocument();
+		// $document->strictErrorChecking = false;
+		// //使用tidy规范网页中不规范的内容,否则可能导致document出错
+		// $tidy     = new \tidy;
+		// $content = $tidy->repairString($content);
+		// //使用utf-8编码
+		// $content = mb_convert_encoding($content, 'UTF-8');
+		// $document->loadXML(
+		//     $content,
+		//     LIBXML_NOERROR | LIBXML_NONET | LIBXML_NOWARNING | LIBXML_NOCDATA
+		// );
+		// $xpath = new DOMXPAth($document);
+		// //选择要查找的id
+		// $elements = $xpath->query("//*[@id='intro']");
+		// if (!is_null($elements)) {
+		//   foreach ($elements as $element) {
+		//     echo "[". $element->nodeName. "]";
+		//   }
+		// }
 		
 	}
 	public function hindex()
