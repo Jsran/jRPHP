@@ -29,4 +29,85 @@ class C{
 		}
 	}
 
+	/**
+	 * 是否GET方式请求而来的
+	 *
+	 * @return boolean
+	 */
+	public function is_get()
+	{
+		return $_SERVER['REQUEST_METHOD'] == 'GET';
+	}
+
+	/**
+	 * 是否POST方式请求而来的
+	 *
+	 * @return boolean
+	 */
+	public function is_post()
+	{
+		return $_SERVER['REQUEST_METHOD'] == 'POST';
+	}
+
+	/**
+	 * 是否HEAD方式请求而来的
+	 *
+	 * @return boolean
+	 */
+	function is_head()
+	{
+		return $_SERVER['REQUEST_METHOD'] == 'HEAD';
+	}
+
+	/**
+	 * 是否PUT方式请求而来的
+	 *
+	 * @return boolean
+	 */
+	public function is_put()
+	{
+		return $_SERVER['REQUEST_METHOD'] == 'PUT';
+	}
+
+	/**
+	 * 是否DELETE方式请求而来的
+	 *
+	 * @return boolean
+	 */
+	public function is_delete()
+	{
+		return $_SERVER['REQUEST_METHOD'] == 'DELETE';
+	}
+
+	/**
+	 * 是否AJAX方式请求而来的
+	 *
+	 * @return boolean
+	 */
+	public function is_ajax()
+	{
+		return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest';
+	}
+
+	/**
+	 * 用session记录一个令牌token
+	 *
+	 */
+	public function set_token()
+	{
+		$_SESSION['token'] = md5(microtime(true));
+	}
+
+	/**
+	 * 验证一个令牌token
+	 *
+	 * @return boolean
+	 */
+	public function valid_token()
+	{
+		$return = $_REQUEST['token'] === $_SESSION['token'] ? true : false;
+		self::set_token();
+		return $return;
+	}
+
 }
